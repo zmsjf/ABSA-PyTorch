@@ -62,6 +62,7 @@ class Instructor:
 
         if opt.device.type == 'cuda':
             logger.info('cuda memory allocated: {}'.format(torch.cuda.memory_allocated(device=opt.device.index)))
+        # 打印基本参数
         self._print_args()
 
     def _print_args(self):
@@ -87,7 +88,7 @@ class Instructor:
                         else:
                             stdv = 1. / math.sqrt(p.shape[0])
                             torch.nn.init.uniform_(p, a=-stdv, b=stdv)
-
+    # 计算训练识别的准确度和失败率
     def _train(self, criterion, optimizer, train_data_loader, val_data_loader):
         max_val_acc = 0
         max_val_f1 = 0
@@ -168,7 +169,7 @@ class Instructor:
         train_data_loader = DataLoader(dataset=self.trainset, batch_size=self.opt.batch_size, shuffle=True)
         test_data_loader = DataLoader(dataset=self.testset, batch_size=self.opt.batch_size, shuffle=False)
         val_data_loader = DataLoader(dataset=self.valset, batch_size=self.opt.batch_size, shuffle=False)
-
+        #
         self._reset_params()
         best_model_path = self._train(criterion, optimizer, train_data_loader, val_data_loader)
         self.model.load_state_dict(torch.load(best_model_path))
@@ -180,7 +181,7 @@ class Instructor:
 def main():
     # Hyper Parameters
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_name', default='bert_spc', type=str)
+    parser.add_argument('--model_name', default='mgan', type=str)
     parser.add_argument('--dataset', default='laptop', type=str, help='twitter, restaurant, laptop')
     parser.add_argument('--optimizer', default='adam', type=str)
     parser.add_argument('--initializer', default='xavier_uniform_', type=str)

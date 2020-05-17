@@ -55,17 +55,20 @@ class AlignmentMatrix(nn.Module):
                 feat = torch.cat([ctx_chunk, asp_chunk, ctx_chunk*asp_chunk], dim=2) # batch_size x 1 x 6*hidden_dim 
                 alignment_mat[:, i, j] = feat.matmul(self.w_u.expand(batch_size, -1, -1)).squeeze(-1).squeeze(-1) 
         return alignment_mat
-
+# 1.初始化
 class MGAN(nn.Module):
     def __init__(self, embedding_matrix, opt):
         super(MGAN, self).__init__()
         self.opt = opt
+        # 1.加载预训练模型
         self.embed = nn.Embedding.from_pretrained(torch.tensor(embedding_matrix, dtype=torch.float))
         self.ctx_lstm = DynamicLSTM(opt.embed_dim, opt.hidden_dim, num_layers=1, batch_first=True, bidirectional=True)
         self.asp_lstm = DynamicLSTM(opt.embed_dim, opt.hidden_dim, num_layers=1, batch_first=True, bidirectional=True)
         self.location = LocationEncoding(opt)
+
         self.w_a2c = nn.Parameter(torch.Tensor(2*opt.hidden_dim, 2*opt.hidden_dim))
         self.w_c2a = nn.Parameter(torch.Tensor(2*opt.hidden_dim, 2*opt.hidden_dim))
+
         self.alignment = AlignmentMatrix(opt)
         self.dense = nn.Linear(8*opt.hidden_dim, opt.polarities_dim)
 
@@ -100,7 +103,7 @@ class MGAN(nn.Module):
         c_asp2ctx = torch.matmul(ctx_out.transpose(1, 2), c_asp2ctx_alpha).squeeze(-1)
         c_ctx2asp_alpha = F.softmax(asp_out.matmul(self.w_c2a.expand(batch_size, -1, -1)).matmul(ctx_pool), dim=1)
         c_ctx2asp = torch.matmul(asp_out.transpose(1, 2), c_ctx2asp_alpha).squeeze(-1)
-
+        # 将矩阵按照dim纬度拼接
         feat = torch.cat([c_asp2ctx, f_asp2ctx, f_ctx2asp, c_ctx2asp], dim=1)
         out = self.dense(feat) # bathc_size x polarity_dim
 
